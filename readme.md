@@ -12,7 +12,6 @@ pip3 install passbolt
 ```
 git clone https://github.com/daniel-lynch/passbolt.git
 cd passbolt
-pip3 install -r requirements.txt
 python3 setup.py install
 ```
 
