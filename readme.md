@@ -19,7 +19,7 @@ python3 setup.py install
 
   - Login:
 
-      To login you will need a private key and the associated passphrase.
+      To login you will need a private key with the associated passphrase and the URI to your passbolt instance.
       Then just call the passbolt class with those variables.
 
       ```
@@ -27,7 +27,7 @@ python3 setup.py install
 
       key = open("passbolt_private.asc", "r").read()
       passphrase = open("passphrase", "r").read().replace('\n', '')
-      Passbolt = passbolt(key, passphrase)
+      Passbolt = passbolt(key, passphrase, "https://passbolt.example.com")
       ```
 
   - Create a password:
