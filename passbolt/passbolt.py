@@ -312,10 +312,10 @@ class passbolt:
             for reqobj in req:
                 if "groups_users" in reqobj:
                     member = reqobj
+                    if member["gpgkey"]["user_id"] in users:
+                        continue
                     for membership in reqobj["groups_users"]:
                         if group == membership["group_id"]:
-                            if member["gpgkey"]["user_id"] == self.userid:
-                                continue
                             self.gpg.import_keys(member["gpgkey"]["armored_key"])
                             self.gpg.trust_keys(
                                 member["gpgkey"]["fingerprint"],
@@ -327,8 +327,6 @@ class passbolt:
                                 })
 
         for user in users:
-            if user in data["secrets"]:
-                continue
             for reqobj in req:
                 member = reqobj
                 if user == reqobj["id"]:
@@ -341,13 +339,6 @@ class passbolt:
                         "user_id": member["gpgkey"]["user_id"],
                         "data": self.__encrypt(password, member["username"])
                         })
-
-        for secret in data["secrets"]:
-            if not self.userid == secret["user_id"]:
-                data["secrets"].append({
-                    "user_id": self.userid,
-                    "data": self.__encrypt(password, self.fingerprint)
-                    })
     
         return self.__req("put", f"/resources/{resourceid}.json", data)
 
