@@ -90,7 +90,7 @@ class passbolt:
                     f"{self.apiurl}{location}{self.apiversion}",
                     headers=self.headers,
                     json=data
-                ).json()["header"]
+                ).json()['header']['message']
             )
         if reqtype == "post":
             return(
@@ -98,7 +98,7 @@ class passbolt:
                     f"{self.apiurl}{location}{self.apiversion}",
                     headers=self.headers,
                     json=data
-                ).json()
+                ).json()['header']['message']
             )
         if reqtype == "delete":
             return(
@@ -136,12 +136,15 @@ class passbolt:
         if not resourceid:
             raise NameError(f"Resource {name} not found")
 
-    def __getadminroleid(self):
+    def __getroleid(self, admin):
         role_id = None
         users = self.__req("get", "/share/search-aros.json")
         for user in users:
             if "role" in user:
-                if user["role"]["name"] == "admin":
+                if admin == True and user["role"]["name"] == "admin":
+                    role_id = user["role"]["id"]
+                    break
+                if admin == False and user["role"]["name"] == "user":
                     role_id = user["role"]["id"]
                     break
         return role_id
@@ -269,7 +272,7 @@ class passbolt:
             password = self.__encrypt(password, self.fingerprint)
             data["secrets"][0]["data"] = password
 
-        return self.__req("post", "/resources.json", data)["header"]["message"]
+        return self.__req("post", "/resources.json", data)
 
     def updatepassword(self, name, password, username=None, newname=None, newusername=None, uri=None, description=None, encrypt_description=True):
         groups = []
@@ -346,7 +349,7 @@ class passbolt:
                     "data": self.__encrypt(password, self.fingerprint)
                     })
     
-        return self.__req("put", f"/resources/{resourceid}.json", data)["message"]
+        return self.__req("put", f"/resources/{resourceid}.json", data)
 
     def deletepassword(self, name, username=None):
         resourceid = self.__getresourceid(name, username)
@@ -438,10 +441,10 @@ class passbolt:
                         })
 
         data = {"permissions": permissions, "secrets": secrets}
-        return(self.__req("put", f"/share/resource/{resourceid}.json", data)["message"])
+        return(self.__req("put", f"/share/resource/{resourceid}.json", data))
 
     def createuser(self, email, firstname, lastname, admin=False):
-        role_id = self.__getadminroleid()
+        role_id = self.__getroleid(admin)
         data = {
             "username": email,
             "profile": {
@@ -453,7 +456,7 @@ class passbolt:
         return self.__req("post", "/users.json", data)
 
     def updateuser(self, email, firstname, lastname, admin=False):
-        role_id = self.__getadminroleid()
+        role_id = self.__getroleid(admin)
         userobj = self.getuser(email)
         data = {
             "username": email,
