@@ -8,22 +8,26 @@ from urllib.parse import unquote
 
 class passbolt:
 
-    def __init__(self, privatekey, passphrase, apiurl):
-        self.privatekey = privatekey
-        self.passphrase = passphrase
+    def __init__(self,privatekey=None, passphrase=None, apiurl=None, fingerprint=None, verify=True):
+        if keyfingerprint:
+            self.keyfingerprint = fingerprint
+            self.gpg = gnupg.GPG(use_agent=True)
+            self.passphrase = None
+        else:
+            self.privatekey = privatekey
+            self.passphrase = passphrase
+            self.gpg = gnupg.GPG()
+            # Importing our private key
+            self.imported_keys = self.gpg.import_keys(privatekey)
+            # Getting the fingerprint of our first privatekey
+            self.keyfingerprint = self.imported_keys.fingerprints[0]
+
         self.apiurl = apiurl
-        self.gpg = gnupg.GPG()
         self.session = requests.session()
-        self.session.verify = True
+        self.session.verify = verify
         self.apiversion = "?api-version=v3"
         self.loginurl = f"/auth/login.json{self.apiversion}"
 
-        # Importing our private key
-        self.imported_keys = self.gpg.import_keys(privatekey)
-
-        # Getting the fingerprint of our first privatekey
-        self.keyfingerprint = self.imported_keys.fingerprints[0]
-        
         # Giving our key Ultimate trust so that we can encrypt secrets with it.
         self.gpg.trust_keys(self.keyfingerprint, "TRUST_ULTIMATE")
 
