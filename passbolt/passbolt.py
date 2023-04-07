@@ -9,7 +9,7 @@ from urllib.parse import unquote
 class passbolt:
 
     def __init__(self,privatekey=None, passphrase=None, apiurl=None, fingerprint=None, verify=True):
-        if keyfingerprint:
+        if fingerprint:
             self.keyfingerprint = fingerprint
             self.gpg = gnupg.GPG(use_agent=True)
             self.passphrase = None
