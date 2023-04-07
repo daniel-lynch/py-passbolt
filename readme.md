@@ -29,7 +29,28 @@ python3 setup.py install
       passphrase = open("passphrase", "r").read().replace('\n', '')
       Passbolt = passbolt(key, passphrase, "https://passbolt.example.com")
       ```
+      
 
+
+      or you will need the fingerprint of your private key store in gpg-agent and  the URI to your passbolt instance.
+      Then just call the passbolt class with those variables.
+
+      ```
+      from passbolt.passbolt import passbolt
+
+      Passbolt = passbolt(apiurl= "https://passbolt.example.com",fingerprint="BD51086546F2B05FE3207570848AD92005EABC")
+      ```
+      
+      
+      
+      and if you use a custom ca, you can specify a custom TLS CA certificate bundle :
+    
+      ```
+      from passbolt.passbolt import passbolt
+ 
+      Passbolt = passbolt(apiurl= "https://passbolt.example.com",fingerprint="BD51086546F2B05FE3207570848AD92005EABC", verify="/etc/ipa/ca.crt")
+      ``` 
+      
   - Create a password:
 
       To create a password you will need the following:
