@@ -3,7 +3,7 @@ import os
 
 def get_long_description():
     with open(os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), 'README.md'
+        os.path.dirname(os.path.abspath(__file__)), 'readme.md'
     ), encoding='utf8') as fp:
         return fp.read()
 
