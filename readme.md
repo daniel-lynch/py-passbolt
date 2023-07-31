@@ -9,12 +9,7 @@ Passbolt is the registered trademark of Passbolt S.A.
 ## Install:
 
 ```
-pip3 install passbolt
-```
-
-### From source
-```
-git clone https://github.com/daniel-lynch/passbolt.git
+git clone https://github.com/daniel-lynch/py-passbolt.git
 cd passbolt
 python3 setup.py install
 ```
