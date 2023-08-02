@@ -1,16 +1,21 @@
 # Readme
 
-Based on Passbolt's web api https://help.passbolt.com/api
+Python SDK for passbolt API https://help.passbolt.com/api
+
+This project is a community driven and is not associated with Passbolt S.A.
+
+Passbolt is the registered trademark of Passbolt S.A.
 
 ## Install:
 
 ```
-pip3 install passbolt
+pip install git+https://github.com/daniel-lynch/py-passbolt
 ```
 
-### From source
+or
+
 ```
-git clone https://github.com/daniel-lynch/passbolt.git
+git clone https://github.com/daniel-lynch/py-passbolt.git
 cd passbolt
 python3 setup.py install
 ```
