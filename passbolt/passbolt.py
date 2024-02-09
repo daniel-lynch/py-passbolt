@@ -128,6 +128,18 @@ class passbolt:
         resources = self.__req("get", "/resources.json", parameters=parameters)
         return(resources)
 
+    def __getresource(self, name, username=None, parameters=None):
+        resourceid = None
+        resources = self.__getresources(parameters)
+        for resource in resources:
+            if name == resource['name']:
+                if username and not username == resource['username']:
+                    continue                
+                return resource
+        if not resourceid:
+            raise NameError(f"Resource {name} not found")
+
+
     def __getresourceid(self, name, username=None, parameters=None):
         resourceid = None
         resources = self.__getresources(parameters)
@@ -371,9 +383,12 @@ class passbolt:
         secrets = []
         permissions = []
 
-        resourceid = self.__getresourceid(name, username)
+        resource = self.__getresource(name, username)                
+        resourcetype = self.__req("get", f"/resource-types/{resource['resource_type_id']}.json")["slug"]
+        has_encrypted_description = resourcetype == "password-and-description"
+        
 
-        password = self.getpassword(name, username)[0].password
+        passwordObject = self.getpassword(name, username)[0]
 
         for group in groups:
             groupobj = self.getgroup(group)
@@ -384,7 +399,7 @@ class passbolt:
                     "aro": "Group",
                     "aro_foreign_key": groupobj.groupid,
                     "aco": "Resource",
-                    "aco_foreign_key": resourceid,
+                    "aco_foreign_key": resource['id'],
                     "type": permission
                     })
 
@@ -403,9 +418,15 @@ class passbolt:
                             member["gpgkey"]["fingerprint"],
                             "TRUST_ULTIMATE")
 
+                        if has_encrypted_description:
+                            secretsobj = json.dumps({
+                                "password": passwordObject.password, 
+                                "description": passwordObject.description})                            
+                        else:
+                            secretsobj = passwordObject.password
                         secrets.append({
                             "user_id": member["gpgkey"]["user_id"],
-                            "data": self.__encrypt(password, member["username"])
+                            "data": self.__encrypt(secretsobj, member["username"])
                             })
 
         for user in users:
@@ -423,7 +444,7 @@ class passbolt:
 
                     secrets.append({
                         "user_id": member["gpgkey"]["user_id"],
-                        "data": self.__encrypt(password, member["username"])
+                        "data": self.__encrypt(passwordObject.password, member["username"])
                         })
 
                     permissions.append({
@@ -431,12 +452,12 @@ class passbolt:
                         "aro": "User",
                         "aro_foreign_key": member["gpgkey"]["user_id"],
                         "aco": "Resource",
-                        "aco_foreign_key": resourceid,
+                        "aco_foreign_key": resource['id'],
                         "type": permission
                         })
 
         data = {"permissions": permissions, "secrets": secrets}
-        return(self.__req("put", f"/share/resource/{resourceid}.json", data))
+        return(self.__req("put", f"/share/resource/{resource['id']}.json", data))
 
     def createuser(self, email, firstname, lastname, admin=False):
         role_id = self.__getroleid(admin)
