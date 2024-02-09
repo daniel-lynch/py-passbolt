@@ -9,7 +9,7 @@ def get_long_description():
 
 setup(
         name='passbolt',
-        version='1.23',
+        version='1.24',
         description='Passbolt python module',
         long_description=get_long_description(),
         long_description_content_type='text/markdown',
