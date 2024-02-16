@@ -147,12 +147,17 @@ python3 setup.py install
       - List of Users to share with (Optional if Groups list is defined)
       - List of Groups to share with (Optional if Users list is defined)
 
+    Note: 
+    
+      - If there is unkwnown user or unknow group, the function will ignore the share. No error will be reported
+      - Sharing with large group take time as we need to cipher the secret for all the users
+
     ```
     print(
         Passbolt.sharepassword(
             "Resource name",
             "Username",
-            ["List of Users"],
+            ["List of Users Email"],
             ["List of Groups"])
         )
 
