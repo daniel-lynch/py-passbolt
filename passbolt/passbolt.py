@@ -362,6 +362,7 @@ class passbolt:
         resourceid = self.__getresourceid(name, username)
         return self.__req("delete", f"/resources/{resourceid}.json")
 
+    # tutorial : https://www.passbolt.com/docs/development/resources/sharing/
     def sharepassword(self, name, username=None, users=[], groups=[], permission="Read"):
         if not users and not groups:
             raise ValueError("Atleast one user or group is required")
@@ -383,11 +384,10 @@ class passbolt:
         secrets = []
         permissions = []
 
-        resource = self.__getresource(name, username)                
+        resource = self.__getresource(name, username)
         resourcetype = self.__req("get", f"/resource-types/{resource['resource_type_id']}.json")["slug"]
         has_encrypted_description = resourcetype == "password-and-description"
         
-
         passwordObject = self.getpassword(name, username)[0]
 
         for group in groups:
@@ -421,7 +421,7 @@ class passbolt:
                         if has_encrypted_description:
                             secretsobj = json.dumps({
                                 "password": passwordObject.password, 
-                                "description": passwordObject.description})                            
+                                "description": passwordObject.description})
                         else:
                             secretsobj = passwordObject.password
                         secrets.append({
@@ -430,12 +430,19 @@ class passbolt:
                             })
 
         for user in users:
+
             if user in secrets:
                 continue
+            
             for reqobj in req:
                 member = reqobj
                 if "username" not in reqobj:
                     continue
+
+                # check for self
+                if member["id"] == self.userid:
+                    continue
+
                 if user == reqobj["username"]:
                     self.gpg.import_keys(member["gpgkey"]["armored_key"])
                     self.gpg.trust_keys(
@@ -446,18 +453,33 @@ class passbolt:
                         "user_id": member["gpgkey"]["user_id"],
                         "data": self.__encrypt(passwordObject.password, member["username"])
                         })
-
+                    
                     permissions.append({
                         "is_new": True,
                         "aro": "User",
                         "aro_foreign_key": member["gpgkey"]["user_id"],
-                        "aco": "Resource",
-                        "aco_foreign_key": resource['id'],
+                        # not needed 
+                        # "aco": "Resource",
+                        # "aco_foreign_key": resource['id'],
                         "type": permission
                         })
 
         data = {"permissions": permissions, "secrets": secrets}
-        return(self.__req("put", f"/share/resource/{resource['id']}.json", data))
+        # data = {"permissions": permissions}
+        # import json; print(json.dumps(data))
+        # print(data)
+
+        # first simulate the sharing
+        # then share if its okay
+        response = self.session.post(f"{self.apiurl}/share/simulate/resource/{resource['id']}.json", headers=self.headers, json=data)
+
+        # all fine
+        if response.status_code == 200:
+            return(self.__req("put", f"/share/resource/{resource['id']}.json", data))
+        # some error
+        else:
+            return (f"Sharing simulation failed, not sharing.")
+            # return (f"Failed to simulate sharing: {response.status_code} - {response.text}")
 
     def createuser(self, email, firstname, lastname, admin=False):
         role_id = self.__getroleid(admin)
