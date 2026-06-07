@@ -1,0 +1,49 @@
+name: Integration
+
+# Heavier than the unit suite: spins up a real Passbolt instance.
+# Runs on demand and weekly, not on every push.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package and test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[test]'
+
+      - name: Start Passbolt
+        run: docker compose -f tests/integration/compose.yml up -d
+
+      - name: Wait for Passbolt to be ready
+        run: |
+          for i in $(seq 1 80); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/healthcheck/status.json || true)
+            if [ "$code" = "200" ]; then echo "ready"; exit 0; fi
+            sleep 3
+          done
+          echo "passbolt did not become ready" >&2
+          docker compose -f tests/integration/compose.yml logs passbolt
+          exit 1
+
+      - name: Bootstrap test accounts
+        run: python tests/integration/bootstrap.py
+
+      - name: Run end-to-end tests
+        run: pytest tests/integration/test_e2e.py -v
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f tests/integration/compose.yml down -v
