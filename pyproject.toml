@@ -1,6 +1,41 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "passbolt"
+version = "1.25"
+description = "Python SDK for the Passbolt API"
+readme = "readme.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Daniel Lynch", email = "daniel.lynch2016@gmail.com" }]
+keywords = ["passbolt", "password-manager", "api", "sdk", "gpg"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "requests",
+    "python-gnupg",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "requests-mock",
+]
+
+[project.urls]
+Homepage = "https://github.com/daniel-lynch/py-passbolt"
+Issues = "https://github.com/daniel-lynch/py-passbolt/issues"
+
+[tool.setuptools]
+packages = ["passbolt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

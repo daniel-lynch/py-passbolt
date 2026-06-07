@@ -6,6 +6,8 @@ This project is a community driven and is not associated with Passbolt S.A.
 
 Passbolt is the registered trademark of Passbolt S.A.
 
+Tested against Passbolt CE 5.x (API v3 endpoints).
+
 ## Install:
 
 ```
@@ -16,8 +18,8 @@ or
 
 ```
 git clone https://github.com/daniel-lynch/py-passbolt.git
-cd passbolt
-python3 setup.py install
+cd py-passbolt
+pip install .
 ```
 
 ## Examples:
@@ -342,3 +344,40 @@ python3 setup.py install
     ```
       Passbolt.deletegroup("Users")
     ```
+
+## Development & Testing
+
+Unit tests are mock-based and require **no** Passbolt instance — they mock the
+HTTP layer and use a throwaway GPG key. These run in CI on every push.
+
+```
+pip install -e '.[test]'
+pytest
+```
+
+### Integration tests against a real instance
+
+`tests/integration/test_e2e.py` runs the full create/get/update/share/delete
+flows (including the regressions for issues #8 and #10) against a real,
+ephemeral Passbolt instance that it bootstraps itself. It needs Docker:
+
+```
+docker compose -f tests/integration/compose.yml up -d
+# wait until http://localhost:8080/healthcheck/status.json returns 200
+python tests/integration/bootstrap.py        # registers two test users
+pytest tests/integration/test_e2e.py
+docker compose -f tests/integration/compose.yml down -v
+```
+
+This is also run weekly / on demand by the `Integration` GitHub Actions
+workflow.
+
+The older `test_password.py` / `test_users.py` / `test_groups.py` assume a
+pre-populated instance and are skipped unless you point them at one:
+
+```
+export keypath=/path/to/private.asc
+export passphrase=yourpassphrase
+export uri=https://passbolt.example.com
+pytest tests/integration/test_password.py
+```

@@ -1,6 +1,14 @@
 import unittest
 import os
+import pytest
 from passbolt.passbolt import passbolt
+
+if not os.environ.get('keypath'):
+    pytest.skip(
+        "integration tests require a live Passbolt instance "
+        "(set keypath, passphrase and uri env vars)",
+        allow_module_level=True,
+    )
 
 key = open(os.environ.get('keypath'), "r").read()
 passphrase = os.environ.get('passphrase')

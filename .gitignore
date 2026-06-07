@@ -1,0 +1,20 @@
+# local Passbolt dev/test stack (containers, keys, venv) — never commit
+.devstack/
+
+# integration test artifacts (generated keys + account manifest)
+tests/integration/.artifacts/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
