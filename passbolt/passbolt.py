@@ -152,6 +152,13 @@ class passbolt:
         if not resourceid:
             raise NameError(f"Resource {name} not found")
 
+    def __get_resource_type_id(self, slug):
+        resource_types = self.__req("get", "/resource-types.json")
+        for resource_type in resource_types:
+            if resource_type["slug"] == slug:
+                return resource_type["id"]
+        return None
+
     def __getroleid(self, admin):
         role_id = None
         users = self.__req("get", "/share/search-aros.json")
@@ -276,10 +283,7 @@ class passbolt:
         }
 
         if encrypt_description:
-            resource_types = self.__req("get", "/resource-types.json")
-            for type in resource_types:
-                if type["slug"] == "password-and-description":
-                    data["resource_type_id"] = type["id"]
+            data["resource_type_id"] = self.__get_resource_type_id("password-and-description")
             secretsobj = json.dumps({"password": password, "description": description})
             secrets = self.__encrypt(secretsobj, self.fingerprint)
             data["secrets"][0]["data"] = secrets
@@ -293,9 +297,17 @@ class passbolt:
     def updatepassword(self, name, password, username=None, newname=None, newusername=None, uri=None, description=None, encrypt_description=True):
         groups = []
         users = []
+
+        # resource_type_id is required on update; default to the resource's
+        # existing type so the call succeeds regardless of the type's slug
+        # (slugs differ between v4/v5 instances).
+        resource = self.__getresource(name, username)
+        resourceid = resource["id"]
+
         data = {
             "name": newname or name,
             "username": newusername or username,
+            "resource_type_id": resource["resource_type_id"],
             "secrets": []
             }
 
@@ -304,8 +316,6 @@ class passbolt:
 
         if not uri == None:
             data["uri"] = uri
-
-        resourceid = self.__getresourceid(name, username)
 
         permdata = self.__req("get", f"/permissions/resource/{resourceid}.json")
 
@@ -318,10 +328,9 @@ class passbolt:
         req = self.__req("get", "/share/search-aros.json")
 
         if encrypt_description:
-            resource_types = self.__req("get", "/resource-types.json")
-            for type in resource_types:
-                if type["slug"] == "password-and-description":
-                    data["resource_type_id"] = type["id"]
+            pad_type_id = self.__get_resource_type_id("password-and-description")
+            if pad_type_id:
+                data["resource_type_id"] = pad_type_id
             password = json.dumps({"password": password, "description": description})
 
         for group in groups:
@@ -449,11 +458,17 @@ class passbolt:
                         member["gpgkey"]["fingerprint"],
                         "TRUST_ULTIMATE")
 
+                    if has_encrypted_description:
+                        secretsobj = json.dumps({
+                            "password": passwordObject.password,
+                            "description": passwordObject.description})
+                    else:
+                        secretsobj = passwordObject.password
                     secrets.append({
                         "user_id": member["gpgkey"]["user_id"],
-                        "data": self.__encrypt(passwordObject.password, member["username"])
+                        "data": self.__encrypt(secretsobj, member["username"])
                         })
-                    
+
                     permissions.append({
                         "is_new": True,
                         "aro": "User",
