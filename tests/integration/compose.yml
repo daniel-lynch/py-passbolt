@@ -1,0 +1,34 @@
+# Ephemeral Passbolt CE stack for integration testing (local + CI).
+# Brings up MariaDB + Passbolt on http://localhost:8080.
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "1"
+      MYSQL_DATABASE: "passbolt"
+      MYSQL_USER: "passbolt"
+      MYSQL_PASSWORD: "P4ssb0lt"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  passbolt:
+    image: passbolt/passbolt:latest-ce
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_FULL_BASE_URL: http://localhost:8080
+      DATASOURCES_DEFAULT_HOST: "db"
+      DATASOURCES_DEFAULT_USERNAME: "passbolt"
+      DATASOURCES_DEFAULT_PASSWORD: "P4ssb0lt"
+      DATASOURCES_DEFAULT_DATABASE: "passbolt"
+      PASSBOLT_REGISTRATION_PUBLIC: "false"
+      PASSBOLT_SSL_FORCE: "false"
+      DATASOURCES_DEFAULT_SSL_VERIFY: "false"
+    command:
+      ["/usr/bin/wait-for.sh", "-t", "0", "db:3306", "--", "/docker-entrypoint.sh"]
+    ports:
+      - "8080:80"
